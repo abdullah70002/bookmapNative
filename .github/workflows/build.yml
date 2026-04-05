@@ -1,0 +1,42 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # استخدام Java 11 لأنه الأكثر توافقاً مع المشاريع القديمة
+      - name: Setup Java 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Extract Project
+        run: unzip bookmapNative.zip
+
+      - name: Build APK
+        run: |
+          cd bookmapNative
+          
+          # استخدام نسخة Gradle 7.5 (نسخة مستقرة جداً لهذه الأخطاء)
+          gradle wrapper --gradle-version 7.5
+          
+          chmod +x gradlew
+          
+          # تشغيل البناء مع تنظيف الملفات المؤقتة
+          ./gradlew clean assembleDebug --stacktrace
+          
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Final-App-APK
+          path: "**/build/outputs/apk/debug/*.apk"
