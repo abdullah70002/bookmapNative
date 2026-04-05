@@ -1,0 +1,44 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          # لا نستخدم التخزين المؤقت هنا لتجنب تضارب الملفات
+          
+      - name: Extract Project
+        run: unzip bookmapNative.zip
+
+      - name: Build APK
+        run: |
+          cd bookmapNative
+          
+          # تثبيت Gradle 7.5 (الإصدار المثالي لـ AGP 7.4.2)
+          gradle wrapper --gradle-version 7.5
+          
+          chmod +x gradlew
+          
+          # البدء بالبناء مع تنظيف شامل وتفعيل دعم المكتبات القديمة
+          ./gradlew clean assembleDebug --stacktrace --no-daemon \
+            -Pandroid.useAndroidX=true \
+            -Pandroid.enableJetifier=true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Trading-App-Final
+          path: "**/build/outputs/apk/debug/*.apk"
