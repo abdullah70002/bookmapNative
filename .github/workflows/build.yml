@@ -1,0 +1,44 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # حل مشكلة تحذير Node.js بفرض استخدام النسخة الأحدث
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Extract Project
+        run: unzip bookmapNative.zip
+
+      - name: Build APK
+        run: |
+          cd bookmapNative
+          
+          # إجبار النظام على استخدام نسخة Gradle 8.2 المتوافقة مع معظم المشاريع
+          gradle wrapper --gradle-version 8.2
+          
+          chmod +x gradlew
+          
+          # تنفيذ البناء مع تجاهل التحذيرات التي لا تسبب فشل العملية
+          ./gradlew assembleDebug --stacktrace --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-Debug-APK
+          path: "**/build/outputs/apk/debug/*.apk"
